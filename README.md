@@ -10,8 +10,18 @@ This layer provides:
   and the cxx-cmake application template, and
 - [kas](https://kas.readthedocs.io/) configuration files for building them.
 
-It targets Yocto Project 6.0 (`wrynose`). This repository currently contains
-only the layer skeleton; recipes will follow.
+It targets Yocto Project 6.0 (`wrynose`).
+
+## Recipes
+
+- `recipes-libs/util/util_git.bb` builds the library template (`util`) from
+  a `SRCREV` pinned to a commit on its `library` branch, with
+  `LIC_FILES_CHKSUM` taken from the repository's own `LICENSE` file so a
+  licence change breaks the recipe by design. It is the baseline recipe: the
+  header comment records the packaging-QA failures the pinned commit is
+  expected to produce (an unversioned `libutil.so`, CMake config files in
+  the runtime package) as the acceptance evidence for the library's
+  install-layout fixes. Nothing in the recipe hides them.
 
 ## Dependencies
 
@@ -80,6 +90,37 @@ commits, as CI does with `kas-container`.
 
 `MACHINE` is `qemuarm64` as a build target only: nothing is executed under
 QEMU.
+
+To build just the library, pass `--target util`:
+
+```sh
+kas build kas/qemuarm64.yml --target util
+```
+
+### Building util from a local checkout
+
+`kas/externalsrc.yml` is the dev-loop overlay: it inherits `externalsrc` and
+points `EXTERNALSRC:pn-util` at `/work/cxx-cmake-library`, so `util` is built
+from that checkout instead of the pinned `SRCREV`: `do_fetch`, `do_unpack`
+and `do_patch` are skipped, but `do_populate_lic` still runs, so
+`LIC_FILES_CHKSUM` is checked against the checkout's `LICENSE` and a local
+licence edit fails the build until the recipe's md5 is updated. The overlay
+also sets `target: util`. Include it after the base config, and make the
+checkout visible at that path inside the build environment. With
+`kas-container`, `/work` is the `KAS_WORK_DIR` mount, so either keep the
+checkout at `$KAS_WORK_DIR/cxx-cmake-library` or bind-mount it with
+`--runtime-args` ("Additional arguments to pass to the container runtime",
+`kas-container --help`):
+
+```sh
+kas-container \
+    --runtime-args "-v /path/to/cxx-cmake-library:/work/cxx-cmake-library" \
+    build kas/qemuarm64.yml:kas/externalsrc.yml
+```
+
+With native kas, `/work/cxx-cmake-library` is a plain host path. The
+checkout must be writable: `externalsrc` drops `oe-workdir` and `oe-logs`
+symlinks into it.
 
 ## Maintainer
 
