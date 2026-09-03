@@ -1,0 +1,16 @@
+# Build util from a local checkout instead of the recipe's SRCREV:
+#   kas build kas/qemuarm64.yml:kas/externalsrc.yml
+# The checkout has to be at /work/cxx-cmake-library inside the build
+# environment and writable. The README has the kas-container bind mount.
+header:
+  version: 23
+  includes:
+    - kas/qemuarm64.yml
+
+target: util
+
+local_conf_header:
+  externalsrc: |
+    # Dev-loop override: build util from a local checkout instead of SRCREV.
+    INHERIT += "externalsrc"
+    EXTERNALSRC:pn-util = "/work/cxx-cmake-library"
