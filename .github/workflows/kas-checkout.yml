@@ -1,0 +1,57 @@
+name: kas checkout
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  kas-checkout:
+    name: kas-container checkout (wrynose 6.0.2, KAS_CLONE_DEPTH=1)
+    runs-on: ubuntu-24.04
+    env:
+      KAS_CLONE_DEPTH: "1"
+    steps:
+      - uses: actions/checkout@v7
+
+      # pipx provides the kas-container script; the checkouts below run in
+      # its default image, ghcr.io/siemens/kas/kas:5.5, via the runner's docker.
+      - name: Install kas-container 5.5
+        run: |
+          pipx install kas==5.5
+          kas-container --version
+
+      - name: Use a kas work dir outside the repository
+        run: |
+          mkdir -p "$RUNNER_TEMP/kas-work"
+          echo "KAS_WORK_DIR=$RUNNER_TEMP/kas-work" >> "$GITHUB_ENV"
+
+      - name: Check out the pinned component repos
+        run: kas-container checkout kas/qemuarm64.yml
+
+      - name: Verify every repo is at its locked commit
+        run: |
+          status=0
+          while read -r repo commit; do
+            head=$(git -C "$KAS_WORK_DIR/$repo" rev-parse HEAD)
+            if [ "$head" = "$commit" ]; then
+              echo "ok   $repo $head"
+            else
+              echo "FAIL $repo is at $head, lock says $commit"
+              status=1
+            fi
+          done < <(awk '/^    [^ ]+:$/ {repo=$1; sub(":", "", repo)}
+                        /commit:/ {print repo, $2}' kas/qemuarm64.lock.yml)
+          exit $status
+
+      - name: Check out the check-layer variant (this layer disabled)
+        run: |
+          kas-container checkout kas/check-layer.yml
+          cat "$KAS_WORK_DIR/build/conf/bblayers.conf"
+          if grep -q meta-cxx-cmake "$KAS_WORK_DIR/build/conf/bblayers.conf"; then
+            echo "check-layer.yml must not add meta-cxx-cmake to bblayers.conf"
+            exit 1
+          fi

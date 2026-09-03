@@ -37,6 +37,50 @@ bitbake-layers add-layer ../meta-cxx-cmake
 `openembedded-layer`) are already present in `conf/bblayers.conf`, so add
 `openembedded-core/meta` and `meta-openembedded/meta-oe` first.
 
+## Building with kas
+
+The `kas/` directory holds [kas](https://kas.readthedocs.io/) configuration
+for building this layer against Yocto Project 6.0.2 (`wrynose`). The combined
+`poky` repository is retired, so the build is composed from the four component
+repositories (`bitbake`, `openembedded-core`, `meta-yocto`, `meta-openembedded`)
+plus this layer:
+
+- `kas/qemuarm64.yml` tracks the `wrynose` branches (`2.18` for bitbake);
+- `kas/qemuarm64.lock.yml` pins bitbake, openembedded-core and meta-yocto to
+  their `yocto-6.0.2` commits and meta-openembedded (which the Yocto point
+  releases do not tag) to a `wrynose` commit; it is loaded automatically;
+- `kas/check-layer.yml` is the same build with this layer left out of
+  `bblayers.conf`, for `yocto-check-layer`.
+
+Install kas 5.5 either natively or as a container:
+
+```sh
+pipx install kas==5.5        # provides both `kas` and `kas-container`
+kas checkout kas/qemuarm64.yml            # native
+kas-container checkout kas/qemuarm64.yml  # needs docker or podman; runs in
+                                          # ghcr.io/siemens/kas/kas:5.5
+```
+
+Keep the shared state and download caches *outside* the kas work directory
+(and its `build/` subdirectory), so a fresh work directory still starts warm
+and every run primes the caches for the next one:
+
+```sh
+export SSTATE_DIR=~/yocto/sstate
+export DL_DIR=~/yocto/downloads
+kas checkout kas/qemuarm64.yml   # clone and pin the repos, write build/conf
+kas build kas/qemuarm64.yml      # optional: build core-image-minimal
+```
+
+kas passes `SSTATE_DIR` and `DL_DIR` through to bitbake. To bump the pins,
+run `kas lock --update kas/qemuarm64.yml` (moves every repository to its
+branch head) or edit the commits in `kas/qemuarm64.lock.yml` to match a
+specific point release; `KAS_CLONE_DEPTH=1` is enough to check out the pinned
+commits, as CI does with `kas-container`.
+
+`MACHINE` is `qemuarm64` as a build target only: nothing is executed under
+QEMU.
+
 ## Maintainer
 
 Ryan Sherlock <ryan.m.sherlock@gmail.com>
