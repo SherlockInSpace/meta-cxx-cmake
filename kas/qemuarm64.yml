@@ -1,0 +1,48 @@
+# kas configuration for building this layer against Yocto Project 6.0
+# (wrynose). The combined poky repository is retired, so the build is
+# composed from the four component repositories.
+#
+# Branches are tracked here; exact commits are pinned in qemuarm64.lock.yml,
+# which kas loads automatically: the yocto-6.0.2 tags for bitbake,
+# openembedded-core and meta-yocto, and a wrynose commit for
+# meta-openembedded, which the Yocto point releases do not tag. To bump:
+# `kas lock --update kas/qemuarm64.yml` (moves every repo to its branch head)
+# or edit the SHAs in the lock file to match a specific point release.
+header:
+  version: 23
+
+distro: poky
+# Build target only (see README): nothing is executed under QEMU.
+machine: qemuarm64
+target: core-image-minimal
+
+repos:
+  bitbake:
+    url: https://git.openembedded.org/bitbake
+    branch: "2.18"
+    # bitbake is a tool, not a layer.
+    layers:
+      .: disabled
+
+  openembedded-core:
+    url: https://git.openembedded.org/openembedded-core
+    branch: wrynose
+    layers:
+      meta:
+
+  meta-yocto:
+    url: https://git.yoctoproject.org/meta-yocto
+    branch: wrynose
+    layers:
+      meta-poky:
+
+  # Not tagged by the Yocto point releases: the lock file pins a wrynose
+  # commit rather than a 6.0.2 one.
+  meta-openembedded:
+    url: https://git.openembedded.org/meta-openembedded
+    branch: wrynose
+    layers:
+      meta-oe:
+
+  # This repository (no url: kas resolves the repo containing this file).
+  meta-cxx-cmake:
