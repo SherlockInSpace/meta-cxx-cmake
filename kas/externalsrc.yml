@@ -1,0 +1,41 @@
+# Dev-loop override: build util from a local checkout of the library instead
+# of the SRCREV pinned in recipes-libs/util/util_git.bb. Include it after the
+# base config; besides the local.conf override it only switches the default
+# target to util:
+#
+#   kas build kas/qemuarm64.yml:kas/externalsrc.yml
+#
+# The checkout has to be visible at /work/cxx-cmake-library *inside the build
+# environment*. With kas-container, /work is the KAS_WORK_DIR mount, so
+# either keep the checkout at ${KAS_WORK_DIR}/cxx-cmake-library on the host
+# or bind-mount it there with kas-container's --runtime-args option
+# ("Additional arguments to pass to the container runtime", see
+# `kas-container --help`; kas 5.5):
+#
+#   kas-container \
+#       --runtime-args "-v /path/to/cxx-cmake-library:/work/cxx-cmake-library" \
+#       build kas/qemuarm64.yml:kas/externalsrc.yml
+#
+# (The KAS_RUNTIME_ARGS variable seen inside the script is internal: the
+# script assigns it unconditionally, so setting it in the environment has no
+# effect.) With native kas, /work/cxx-cmake-library is a plain host path.
+#
+# externalsrc skips do_fetch/do_unpack/do_patch for util, so SRCREV is
+# ignored, but do_populate_lic still runs and LIC_FILES_CHKSUM is checked
+# against the local tree's LICENSE: a local licence edit fails the build
+# until the md5 in the recipe is updated. The source directory must be
+# writable: the class drops oe-workdir/oe-logs symlinks into it
+# (EXTERNALSRC_SYMLINKS).
+header:
+  version: 23
+  includes:
+    - kas/qemuarm64.yml
+
+# The dev loop is about the library, not the image.
+target: util
+
+local_conf_header:
+  externalsrc: |
+    # Dev-loop override: build util from a local checkout instead of SRCREV.
+    INHERIT += "externalsrc"
+    EXTERNALSRC:pn-util = "/work/cxx-cmake-library"
