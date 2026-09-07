@@ -44,71 +44,87 @@ bitbake-layers add-layer ../meta-cxx-cmake
 `openembedded-layer`) are already present in `conf/bblayers.conf`, so add
 `openembedded-core/meta` and `meta-openembedded/meta-oe` first.
 
-## Building with kas
+## Building locally
 
-The `kas/` directory holds [kas](https://kas.readthedocs.io/) configuration
-for building this layer against Yocto Project 6.0.2 (`wrynose`). The combined
-`poky` repository is retired, so the build is composed from the four component
-repositories (`bitbake`, `openembedded-core`, `meta-yocto`, `meta-openembedded`)
-plus this layer:
-
-- `kas/qemuarm64.yml` tracks the `wrynose` branches (`2.18` for bitbake);
-- `kas/qemuarm64.lock.yml` pins bitbake, openembedded-core and meta-yocto to
-  their `yocto-6.0.2` commits and meta-openembedded (which the Yocto point
-  releases do not tag) to a `wrynose` commit; it is loaded automatically;
-- `kas/check-layer.yml` is the same build with this layer and `meta-oe`
-  left out of `bblayers.conf`. `yocto-check-layer` adds them itself, and CI
-  runs it on every pull request:
-
-  ```sh
-  kas-container shell kas/check-layer.yml -c \
-      'yocto-check-layer --no-auto-dependency \
-         --dependency /work/openembedded-core/meta /work/meta-openembedded/meta-oe -- /repo'
-  ```
-
-Install kas 5.5 either natively or as a container:
+`kas/qemuarm64.yml` composes Yocto Project 6.0.2 (`wrynose`) from `bitbake`,
+`openembedded-core`, `meta-yocto` and `meta-openembedded` plus this layer, now
+that the combined poky repository is retired. `kas/qemuarm64.lock.yml`, loaded
+automatically, fixes each repo at its `yocto-6.0.2` commit (a `wrynose` commit
+for meta-openembedded, which the point releases do not tag). To bump the
+commits, run `kas lock --update kas/qemuarm64.yml` or edit the lock file.
+`kas/check-layer.yml` is the same build with this layer and `meta-oe` left out of
+`bblayers.conf`; `yocto-check-layer` adds them itself, and CI runs it on every pull
+request:
 
 ```sh
-pipx install kas==5.5        # provides both `kas` and `kas-container`
-kas checkout kas/qemuarm64.yml            # native
-kas-container checkout kas/qemuarm64.yml  # needs docker or podman; runs in
-                                          # ghcr.io/siemens/kas/kas:5.5
+kas-container shell kas/check-layer.yml -c \
+    'yocto-check-layer --no-auto-dependency \
+       --dependency /work/openembedded-core/meta /work/meta-openembedded/meta-oe -- /repo'
 ```
 
-Keep the shared state and download caches *outside* the kas work directory
-(and its `build/` subdirectory), so a fresh work directory still starts warm
-and every run primes the caches for the next one:
+`MACHINE` is `qemuarm64` as a build target only. There is no image build and
+no SDK yet, and nothing runs under QEMU. Those come later, with the container
+repo's `yocto` image.
+
+### One-time setup
+
+`kas-container` runs kas inside `ghcr.io/siemens/kas/kas:5.5`, so the host
+needs only docker (or podman) and the script:
 
 ```sh
+pipx install kas==5.5   # installs kas-container next to kas
+```
+
+Put the three directories kas uses outside this repo. `KAS_WORK_DIR` defaults
+to the current directory, which would drop four clones and `build/` into this
+checkout. The other two are bitbake's shared-state and download caches and
+should outlive a deleted work directory, so the next build starts warm.
+`kas-container` bind-mounts them as `/work`, `/sstate` and `/downloads` and
+passes the paths on to bitbake.
+
+```sh
+export KAS_WORK_DIR=~/yocto/work
 export SSTATE_DIR=~/yocto/sstate
 export DL_DIR=~/yocto/downloads
-kas checkout kas/qemuarm64.yml   # clone and pin the repos, write build/conf
-kas build kas/qemuarm64.yml      # optional: build core-image-minimal
+mkdir -p "$KAS_WORK_DIR" "$SSTATE_DIR" "$DL_DIR"
 ```
 
-kas passes `SSTATE_DIR` and `DL_DIR` through to bitbake. To bump the pins,
-run `kas lock --update kas/qemuarm64.yml` (moves every repository to its
-branch head) or edit the commits in `kas/qemuarm64.lock.yml` to match a
-specific point release; `KAS_CLONE_DEPTH=1` is enough to check out the pinned
-commits, as CI does with `kas-container`.
+### The loop
 
-`MACHINE` is `qemuarm64` as a build target only: nothing is executed under
-QEMU.
-
-To build just the library:
+From the root of this repo:
 
 ```sh
-kas build kas/qemuarm64.yml --target util
+kas-container build --target util kas/qemuarm64.yml
 ```
 
-### Building util from a local checkout
+A cold build runs 984 tasks and takes about 20 minutes on a 20-core machine.
+With warm caches a rebuild of `util` takes under a minute in an existing work
+directory, a few minutes in a fresh one. The console log is
+`$KAS_WORK_DIR/build/tmp/log/cooker/qemuarm64/console-latest.log`. The
+per-task logs for `util`, QA output included, are under
+`$KAS_WORK_DIR/build/tmp/work/cortexa57-poky-linux/util/0.1.0+git/temp/`.
 
-`kas/externalsrc.yml` inherits `externalsrc` and sets `EXTERNALSRC:pn-util`
-to `/work/cxx-cmake-library`, so `util` is built from that checkout and the
-recipe's `SRCREV` is ignored. It also sets `target: util`. Include it after
-the base config. With `kas-container`, `/work` is the `KAS_WORK_DIR` mount,
-so keep the checkout at `$KAS_WORK_DIR/cxx-cmake-library` or bind-mount it
-with `--runtime-args`:
+Today the build is expected to fail in `do_package_qa`:
+
+```
+ERROR: util-0.1.0+git-r0 do_package_qa: QA Issue: -dev package util-dev contains non-symlink .so '/usr/lib/libutil.so' [dev-elf]
+```
+
+The library installs an unversioned `libutil.so`, so packaging puts the real
+object in `util-dev` and `dev-elf` rejects it. The runtime package `util` is
+left with nothing but `utilConfig*.cmake` and `utilTargets*.cmake` from
+`/usr/share/util/cmake`. Both fixes are in the library: a `SOVERSION` on the
+target and the config installed under `${libdir}/cmake`. The recipe does not
+hide them with `INSANE_SKIP`. A passing build means those fixes have landed
+and `SRCREV` has moved past them. To see the split, run
+`oe-pkgdata-util list-pkg-files util util-dev` from
+`kas-container shell kas/qemuarm64.yml`.
+
+### Iterating on a checkout
+
+`kas/externalsrc.yml` builds `util` from `/work/cxx-cmake-library` instead of
+the recipe's `SRCREV`, so bind-mount a checkout there to build a change before
+pushing it:
 
 ```sh
 kas-container \
@@ -116,11 +132,10 @@ kas-container \
     build kas/qemuarm64.yml:kas/externalsrc.yml
 ```
 
-Setting `KAS_RUNTIME_ARGS` in the environment does nothing, `kas-container`
-overwrites it. With native kas, `/work/cxx-cmake-library` is a plain host
-path. The checkout must be writable: `externalsrc` drops `oe-workdir` and
-`oe-logs` symlinks into it. `LIC_FILES_CHKSUM` is still checked against its
-`LICENSE`, so update the md5 in the recipe if you change that file.
+The checkout has to be writable, since `externalsrc` drops `oe-workdir` and
+`oe-logs` symlinks into it, and `LIC_FILES_CHKSUM` is still checked against
+its `LICENSE`. `kas-container` overwrites `KAS_RUNTIME_ARGS`, so setting it in
+the environment does nothing.
 
 ## Maintainer
 
