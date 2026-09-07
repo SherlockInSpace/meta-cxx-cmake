@@ -1,0 +1,55 @@
+name: check-layer
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check-layer:
+    name: yocto-check-layer (kas-container, KAS_CLONE_DEPTH=1)
+    # The runner only hosts Docker; the check itself runs in the kas 5.5 container.
+    # ubuntu-24.04 is GitHub's current stable Linux runner; 26.04 is still a preview label.
+    runs-on: ubuntu-24.04
+    env:
+      KAS_CLONE_DEPTH: "1"
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install kas-container 5.5
+        run: |
+          pipx install kas==5.5
+          kas-container --version
+
+      - name: Use a kas work dir outside the repository
+        run: |
+          mkdir -p "$RUNNER_TEMP/kas-work"
+          echo "KAS_WORK_DIR=$RUNNER_TEMP/kas-work" >> "$GITHUB_ENV"
+
+      # bitbake's parse cache. A depth-1 clone gives every file a new mtime, so
+      # the restore saves little; it is 1 MB, so we keep it for now.
+      - name: Restore the bitbake cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/kas-work/build/cache
+          key: bitbake-cache-${{ hashFiles('kas/qemuarm64.lock.yml') }}-${{ github.run_id }}
+          restore-keys: bitbake-cache-${{ hashFiles('kas/qemuarm64.lock.yml') }}-
+
+      - name: Check out the component repos
+        run: kas-container checkout kas/check-layer.yml
+
+      # kas-container mounts this repo at /repo and the work dir at /work.
+      - name: Show the layer paths inside the container
+        run: |
+          kas-container shell kas/check-layer.yml -c 'pwd; ls /work; cat /work/build/conf/bblayers.conf'
+
+      # --no-auto-dependency: without it the tool also runs the whole suite
+      # against meta-oe, which it pulls in as a dependency of this layer.
+      - name: Run yocto-check-layer
+        run: |
+          kas-container shell kas/check-layer.yml -c \
+            'yocto-check-layer --no-auto-dependency \
+               --dependency /work/openembedded-core/meta /work/meta-openembedded/meta-oe -- /repo'

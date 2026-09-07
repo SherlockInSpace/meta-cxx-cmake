@@ -56,8 +56,15 @@ plus this layer:
 - `kas/qemuarm64.lock.yml` pins bitbake, openembedded-core and meta-yocto to
   their `yocto-6.0.2` commits and meta-openembedded (which the Yocto point
   releases do not tag) to a `wrynose` commit; it is loaded automatically;
-- `kas/check-layer.yml` is the same build with this layer left out of
-  `bblayers.conf`, for `yocto-check-layer`.
+- `kas/check-layer.yml` is the same build with this layer and `meta-oe`
+  left out of `bblayers.conf`. `yocto-check-layer` adds them itself, and CI
+  runs it on every pull request:
+
+  ```sh
+  kas-container shell kas/check-layer.yml -c \
+      'yocto-check-layer --no-auto-dependency \
+         --dependency /work/openembedded-core/meta /work/meta-openembedded/meta-oe -- /repo'
+  ```
 
 Install kas 5.5 either natively or as a container:
 
@@ -124,8 +131,9 @@ Ryan Sherlock <ryan.m.sherlock@gmail.com>
 Patches are submitted as GitHub pull requests against the `main` branch of
 <https://github.com/SherlockInSpace/meta-cxx-cmake>. Please follow the
 [Conventional Commits](https://www.conventionalcommits.org/) format for
-every commit subject. Pull requests are rebase-merged, one to a few commits
-each. Bug reports and feature requests go to the repository's
+every commit subject. CI lints each commit in the pull request with
+commitlint. Pull requests are rebase-merged, one to a few commits each. Bug
+reports and feature requests go to the repository's
 [issue tracker](https://github.com/SherlockInSpace/meta-cxx-cmake/issues).
 
 ## License

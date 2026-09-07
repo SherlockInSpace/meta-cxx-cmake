@@ -11,6 +11,8 @@ permissions:
 jobs:
   kas-checkout:
     name: kas-container checkout (wrynose 6.0.2, KAS_CLONE_DEPTH=1)
+    # The runner only hosts Docker; kas runs in its own container. ubuntu-24.04 is
+    # GitHub's current stable Linux runner; 26.04 is still a preview label.
     runs-on: ubuntu-24.04
     env:
       KAS_CLONE_DEPTH: "1"
