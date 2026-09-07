@@ -89,9 +89,9 @@ Ryan Sherlock <ryan.m.sherlock@gmail.com>
 
 Patches are submitted as GitHub pull requests against the `main` branch of
 <https://github.com/SherlockInSpace/meta-cxx-cmake>. Please follow the
-[Conventional Commits](https://www.conventionalcommits.org/) format for the
-pull request title; pull requests are squash-merged. Bug reports and feature
-requests go to the repository's
+[Conventional Commits](https://www.conventionalcommits.org/) format for
+every commit subject. Pull requests are rebase-merged, one to a few commits
+each. Bug reports and feature requests go to the repository's
 [issue tracker](https://github.com/SherlockInSpace/meta-cxx-cmake/issues).
 
 ## License
