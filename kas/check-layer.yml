@@ -1,11 +1,17 @@
-# Same build as qemuarm64.yml but with this layer left out of bblayers.conf,
-# so yocto-check-layer can add it itself and test it against a clean base.
+# Same build as qemuarm64.yml with this layer and meta-oe left out of
+# bblayers.conf. yocto-check-layer adds meta-oe from --dependency itself.
+# With it already listed, bitbake sees the collection twice: kas writes
+# ${TOPDIR}/../meta-openembedded/meta-oe, the tool writes the real path.
 header:
   version: 23
   includes:
     - kas/qemuarm64.yml
 
 repos:
+  meta-openembedded:
+    layers:
+      meta-oe: disabled
+
   meta-cxx-cmake:
     layers:
       .: disabled
