@@ -1,9 +1,8 @@
-# Baseline recipe for the library template. At this SRCREV do_package_qa
-# fails. libutil.so has no version, so it lands in util-dev (dev-elf) and
-# util is empty. utilConfig*.cmake and utilTargets.cmake install under
-# ${datadir}/util/cmake and end up in util too. The fix is in the library
-# (versioned SONAME, config under ${libdir}/cmake). Do not hide it here
-# with INSANE_SKIP or FILES tweaks.
+# The library template at its release tag. From v0.2.0 the library installs
+# a versioned libutil.so and its CMake package under ${libdir}/cmake/util,
+# so the default packaging splits it cleanly into util and util-dev. Keep it
+# that way: a QA failure here is a library bug, not something for
+# INSANE_SKIP or FILES.
 
 SUMMARY = "cxx-cmake C++ library template"
 DESCRIPTION = "Example C++ shared library from the cxx-cmake template family, \
@@ -14,16 +13,15 @@ LICENSE = "MIT"
 # md5sum of LICENSE at SRCREV. Recompute when SRCREV moves.
 LIC_FILES_CHKSUM = "file://LICENSE;md5=940a18db9c718275476294053bc4dbb9"
 
-PV = "0.1.0+git"
-SRC_URI = "git://github.com/SherlockInSpace/cxx-cmake-library.git;protocol=https;branch=main"
-# The library commit this recipe was written against.
-SRCREV = "e362a7df2b109676672787b02a11eb3b3878c40f"
+PV = "0.2.0"
+# tag= makes the fetcher check that v${PV} still points at SRCREV.
+SRC_URI = "git://github.com/SherlockInSpace/cxx-cmake-library.git;protocol=https;branch=main;tag=v${PV}"
+SRCREV = "019a035251b16387223365bf72dc15b8c8b9a813"
 # No S needed: wrynose unpacks the tree into ${UNPACKDIR}/${BP}, the default.
 
 DEPENDS = "openssl"
 
 inherit cmake pkgconfig
 
-# The option names at this SRCREV. They become BUILD_TESTING/BUILD_DOCS with
-# the library's CMake rework.
-EXTRA_OECMAKE = "-DBUILD_TEST=OFF -DBUILD_DOC=OFF"
+# Docs and benchmarks are off by default; the tests come back with ptest.
+EXTRA_OECMAKE = "-DBUILD_TESTING=OFF"
