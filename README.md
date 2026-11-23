@@ -14,11 +14,11 @@ It targets Yocto Project 6.0 (`wrynose`).
 
 ## Recipes
 
-- `recipes-libs/util/util_git.bb` builds the library template (`util`) from
-  a fixed `SRCREV` on its `main` branch. At that commit packaging QA
-  fails on the install layout (unversioned `libutil.so`, CMake config in
-  the runtime package). The fix is in the library, and the recipe does
-  nothing to hide it.
+- `recipes-libs/util/util_git.bb` builds the library template (`util`) at
+  a release tag, now `v0.2.0`. `util` gets the versioned `libutil.so.*`;
+  `util-dev` gets the headers under `include/util/`, the `libutil.so`
+  link and the CMake package under `lib/cmake/util/`. The recipe adds no
+  packaging rules of its own, so a QA failure points at the library.
 
 ## Dependencies
 
@@ -102,23 +102,14 @@ With warm caches a rebuild of `util` takes under a minute in an existing work
 directory, a few minutes in a fresh one. The console log is
 `$KAS_WORK_DIR/build/tmp/log/cooker/qemuarm64/console-latest.log`. The
 per-task logs for `util`, QA output included, are under
-`$KAS_WORK_DIR/build/tmp/work/cortexa57-poky-linux/util/0.1.0+git/temp/`.
+`$KAS_WORK_DIR/build/tmp/work/cortexa57-poky-linux/util/0.2.0/temp/`.
 
-Today the build is expected to fail in `do_package_qa`:
-
-```
-ERROR: util-0.1.0+git-r0 do_package_qa: QA Issue: -dev package util-dev contains non-symlink .so '/usr/lib/libutil.so' [dev-elf]
-```
-
-The library installs an unversioned `libutil.so`, so packaging puts the real
-object in `util-dev` and `dev-elf` rejects it. The runtime package `util` is
-left with nothing but `utilConfig*.cmake` and `utilTargets*.cmake` from
-`/usr/share/util/cmake`. Both fixes are in the library: a `SOVERSION` on the
-target and the config installed under `${libdir}/cmake`. The recipe does not
-hide them with `INSANE_SKIP`. A passing build means those fixes have landed
-and `SRCREV` has moved past them. To see the split, run
-`oe-pkgdata-util list-pkg-files util util-dev` from
-`kas-container shell kas/qemuarm64.yml`.
+The build should pass packaging QA. To see the split into `util` (the
+versioned library) and `util-dev` (headers, the `libutil.so` link and the
+CMake package), run `oe-pkgdata-util list-pkg-files util util-dev` from
+`kas-container shell kas/qemuarm64.yml`. A QA failure here is a library
+bug: fix the install layout there rather than adding `INSANE_SKIP` to the
+recipe.
 
 ### Iterating on a checkout
 
