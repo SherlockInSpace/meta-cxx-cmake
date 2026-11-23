@@ -1,0 +1,77 @@
+# Builds util with BitBake on a self-hosted runner: hosted runners have
+# neither the disk nor caches that survive between runs. It runs on pushes
+# to main and by hand, never on pull requests, so no fork's code reaches the
+# machine. README "CI builds on a self-hosted runner" sets the runner up.
+name: kas build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One build at a time: they share the runner's caches.
+concurrency:
+  group: kas-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: kas build --target util
+    # A JSON array of labels in the BITBAKE_RUNS_ON repository variable picks
+    # another runner, for example a rented VM.
+    runs-on: ${{ fromJSON(vars.BITBAKE_RUNS_ON || '["self-hosted", "linux", "bitbake"]') }}
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v7
+
+      # SSTATE_DIR and DL_DIR come from the runner's .env, so every build
+      # starts from the same warm caches.
+      - name: Check the runner's caches
+        run: |
+          for var in SSTATE_DIR DL_DIR; do
+            dir=$(printenv "$var" || true)
+            if [ -z "$dir" ] || [ ! -d "$dir" ]; then
+              echo "::error::$var is not set to an existing directory in the runner's .env (README, CI builds on a self-hosted runner)"
+              exit 1
+            fi
+          done
+          mkdir -p "$RUNNER_TEMP/kas-work"
+          echo "KAS_WORK_DIR=$RUNNER_TEMP/kas-work" >> "$GITHUB_ENV"
+          echo "BUILD_START=$(date +%s)" >> "$GITHUB_ENV"
+
+      - name: Build util
+        run: pipx run --spec kas==5.5 kas-container build --target util kas/qemuarm64.yml
+
+      - name: Record time and disk
+        if: ${{ !cancelled() }}
+        run: |
+          minutes=$(( ($(date +%s) - BUILD_START) / 60 ))
+          {
+            echo "## kas build"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Wall clock | ${minutes} min |"
+            echo "| Work dir | $(du -sh "$KAS_WORK_DIR" | cut -f1) |"
+            echo "| SSTATE_DIR | $(du -sh "$SSTATE_DIR" | cut -f1) |"
+            echo "| DL_DIR | $(du -sh "$DL_DIR" | cut -f1) |"
+            echo "| Free on the work dir's disk | $(df -h --output=avail "$KAS_WORK_DIR" | tail -1 | tr -d ' ') |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep the logs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: kas-build-logs
+          path: |
+            ${{ env.KAS_WORK_DIR }}/build/tmp/log/cooker/
+            ${{ env.KAS_WORK_DIR }}/build/tmp/work/*/util/*/temp/
+          retention-days: 14
+
+      # The work dir holds clones and a full build tree; the caches stay.
+      - name: Remove the work dir
+        if: ${{ always() }}
+        run: rm -rf "$KAS_WORK_DIR"

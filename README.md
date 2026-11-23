@@ -137,6 +137,37 @@ The checkout has to be writable, since `externalsrc` drops `oe-workdir` and
 its `LICENSE`. `kas-container` overwrites `KAS_RUNTIME_ARGS`, so setting it in
 the environment does nothing.
 
+## CI builds on a self-hosted runner
+
+`.github/workflows/kas-build.yml` runs `kas-container build --target util` on
+every push to `main` and by hand (Actions > kas build > Run workflow), never on
+pull requests. Hosted runners have neither the disk nor caches that survive a
+run, so it runs on a machine we register ourselves. Each run writes its wall
+clock and disk use to the run's summary page.
+
+Register the machine under Settings > Actions > Runners > New self-hosted
+runner, with the extra label `bitbake`, and install it as a service. The
+machine needs docker (the runner's user in the `docker` group), `pipx`, and
+two cache directories that outlive the runs. Put their paths in the runner's
+`.env` file, next to `run.sh`, and restart the service:
+
+```sh
+SSTATE_DIR=/srv/yocto/sstate
+DL_DIR=/srv/yocto/downloads
+```
+
+Because the repository is public, set Settings > Actions > General > "Approval
+for running fork pull request workflows" to require approval for all external
+contributors. A fork's pull request could otherwise change a workflow to
+target the `bitbake` label and run on the machine.
+
+A rented VM works the same way: register it with the same labels and the same
+`.env`. To send the build somewhere with other labels, set the repository
+variable `BITBAKE_RUNS_ON` to a JSON array of them, for example
+`["self-hosted", "linux", "bitbake-vm"]`. GitHub's larger hosted runners
+would do too, but they are only available to organisations on the Team plan
+or above.
+
 ## Maintainer
 
 Ryan Sherlock <ryan.m.sherlock@gmail.com>
