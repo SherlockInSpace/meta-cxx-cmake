@@ -1,0 +1,8 @@
+#!/bin/sh
+# ptest-runner starts this in the ptest directory. gtest prints one
+# "[       OK ]" or "[  FAILED  ]" line per test, ending in its time (a
+# parameterised failure adds ", where GetParam() = ..." first); turn those
+# into the PASS:/FAIL: lines ptest reads. The summary lines have no time.
+./util_unit_tests 2>&1 | sed -n \
+    -e 's/^\[ *OK *\] \([^ ,]*\).* ([0-9]* ms)$/PASS: \1/p' \
+    -e 's/^\[ *FAILED *\] \([^ ,]*\).* ([0-9]* ms)$/FAIL: \1/p'

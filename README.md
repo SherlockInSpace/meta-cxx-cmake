@@ -19,6 +19,9 @@ It targets Yocto Project 6.0 (`wrynose`).
   `util-dev` gets the headers under `include/util/`, the `libutil.so`
   link and the CMake package under `lib/cmake/util/`. The recipe adds no
   packaging rules of its own, so a QA failure points at the library.
+  With `ptest` in `DISTRO_FEATURES`, `util-ptest` holds the unit test
+  binary and `run-ptest`; it runs on hardware with `ptest-runner util`,
+  never under QEMU.
 
 ## Dependencies
 
