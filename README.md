@@ -6,7 +6,7 @@ Yocto layer for the cxx-cmake template family.
 
 This layer provides:
 
-- recipes for the [cxx-cmake library template](https://github.com/SherlockInSpace/cxx-cmake)
+- recipes for the [cxx-cmake library template](https://github.com/SherlockInSpace/cxx-cmake-library)
   and the cxx-cmake application template, and
 - [kas](https://kas.readthedocs.io/) configuration files for building them.
 
@@ -15,7 +15,7 @@ It targets Yocto Project 6.0 (`wrynose`).
 ## Recipes
 
 - `recipes-libs/util/util_git.bb` builds the library template (`util`) from
-  a fixed `SRCREV` on its `library` branch. At that commit packaging QA
+  a fixed `SRCREV` on its `main` branch. At that commit packaging QA
   fails on the install layout (unversioned `libutil.so`, CMake config in
   the runtime package). The fix is in the library, and the recipe does
   nothing to hide it.
