@@ -15,13 +15,24 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=940a18db9c718275476294053bc4dbb9"
 
 PV = "0.2.0"
 # tag= makes the fetcher check that v${PV} still points at SRCREV.
-SRC_URI = "git://github.com/SherlockInSpace/cxx-cmake-library.git;protocol=https;branch=main;tag=v${PV}"
+SRC_URI = "git://github.com/SherlockInSpace/cxx-cmake-library.git;protocol=https;branch=main;tag=v${PV} \
+           file://run-ptest"
 SRCREV = "019a035251b16387223365bf72dc15b8c8b9a813"
 # No S needed: wrynose unpacks the tree into ${UNPACKDIR}/${BP}, the default.
 
 DEPENDS = "openssl"
 
-inherit cmake pkgconfig
+inherit cmake pkgconfig ptest
 
-# Docs and benchmarks are off by default; the tests come back with ptest.
-EXTRA_OECMAKE = "-DBUILD_TESTING=OFF"
+# The unit tests build only for util-ptest. googletest is a static library
+# in meta-oe, so the test binary needs nothing extra at run time. The
+# functional tier skips itself when cross compiling, and docs and benchmarks
+# are off by default.
+PACKAGECONFIG ??= "${@bb.utils.contains('PTEST_ENABLED', '1', 'ptest', '', d)}"
+PACKAGECONFIG[ptest] = "-DBUILD_TESTING=ON,-DBUILD_TESTING=OFF,googletest"
+
+# Runs on the target only, through ptest-runner on a board. Nothing here
+# executes under emulation.
+do_install_ptest() {
+    install -m 0755 ${B}/test/unit/util_unit_tests ${D}${PTEST_PATH}/
+}
