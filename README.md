@@ -27,6 +27,19 @@ It targets Yocto Project 6.0 (`wrynose`).
   `spdlog`. It installs one binary, `/usr/bin/app`. The app's tests are not
   built.
 
+## Running ptest on hardware
+
+`util-ptest` runs on a board, never under QEMU. Add the layer to the board's
+build and put the test package in its image, for example in `local.conf`:
+
+```
+IMAGE_INSTALL:append = " ptest-runner util-ptest"
+```
+
+`ptest` has to be in `DISTRO_FEATURES`, as it is in poky. On the board,
+`ptest-runner util` runs the unit tests and prints a `PASS:` or `FAIL:` line
+for each.
+
 ## Dependencies
 
 This layer depends on:
