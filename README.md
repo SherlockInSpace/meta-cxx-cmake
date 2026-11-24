@@ -69,9 +69,8 @@ kas-container shell kas/check-layer.yml -c \
        --dependency /work/openembedded-core/meta /work/meta-openembedded/meta-oe -- /repo'
 ```
 
-`MACHINE` is `qemuarm64` as a build target only. There is no image build and
-no SDK yet, and nothing runs under QEMU. Those come later, with the container
-repo's `yocto` image.
+`MACHINE` is `qemuarm64` as a build target only. Nothing runs under QEMU:
+the ptest packages run on hardware.
 
 ### One-time setup
 
@@ -135,6 +134,21 @@ The checkout has to be writable, since `externalsrc` drops `oe-workdir` and
 `oe-logs` symlinks into it, and `LIC_FILES_CHKSUM` is still checked against
 its `LICENSE`. `kas-container` overwrites `KAS_RUNTIME_ARGS`, so setting it in
 the environment does nothing.
+
+### The SDK
+
+`kas/sdk.yml` builds the SDK for x86_64 hosts and `kas/sdk-aarch64.yml` the
+one for aarch64 hosts, for the container repo's `yocto` image on amd64 and
+arm64. Both add `util-dev`, `spdlog-dev` and `googletest-dev` to the target
+sysroot, so the library and app templates configure against it.
+
+```sh
+kas-container build kas/sdk.yml
+kas-container build kas/sdk-aarch64.yml
+```
+
+Each writes a self-extracting `*-toolchain-*.sh` installer to
+`$KAS_WORK_DIR/build/tmp/deploy/sdk/`.
 
 ## Maintainer
 
