@@ -168,8 +168,9 @@ the environment does nothing.
 
 `kas/sdk.yml` builds the SDK for x86_64 hosts and `kas/sdk-aarch64.yml` the
 one for aarch64 hosts, for the container repo's `yocto` image on amd64 and
-arm64. Both add `util-dev`, `spdlog-dev` and `googletest-dev` to the target
-sysroot, so the library and app templates configure against it.
+arm64. Both add `util-dev`, `spdlog-dev`, `googletest-dev` and `tracy-dev` to
+the target sysroot, so the library and app templates configure against it,
+the app with `ENABLE_TRACY` too.
 
 ```sh
 kas-container build kas/sdk.yml

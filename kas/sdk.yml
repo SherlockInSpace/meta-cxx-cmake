@@ -1,6 +1,6 @@
 # The SDK the container's yocto image installs: populate_sdk for
-# core-image-minimal with util, spdlog and GoogleTest in the target sysroot,
-# so the library and app templates configure against it. This builds the
+# core-image-minimal with util, spdlog, GoogleTest and Tracy in the target
+# sysroot, so the library and app templates configure against it. This builds the
 # installer for x86_64 hosts; kas/sdk-aarch64.yml builds the arm64 one.
 #   kas build kas/sdk.yml
 header:
@@ -13,7 +13,7 @@ task: populate_sdk
 
 local_conf_header:
   sdk: |
-    TOOLCHAIN_TARGET_TASK:append = " util-dev spdlog-dev googletest-dev"
+    TOOLCHAIN_TARGET_TASK:append = " util-dev spdlog-dev googletest-dev tracy-dev"
     TOOLCHAIN_HOST_TASK:append = " nativesdk-ninja"
     # No src-pkgs: nothing in the container uses every package's sources.
     SDKIMAGE_FEATURES = "dev-pkgs dbg-pkgs"
