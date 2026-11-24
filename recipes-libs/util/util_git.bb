@@ -13,11 +13,11 @@ LICENSE = "MIT"
 # md5sum of LICENSE at SRCREV. Recompute when SRCREV moves.
 LIC_FILES_CHKSUM = "file://LICENSE;md5=940a18db9c718275476294053bc4dbb9"
 
-PV = "0.2.0"
+PV = "0.3.0"
 # tag= makes the fetcher check that v${PV} still points at SRCREV.
 SRC_URI = "git://github.com/SherlockInSpace/cxx-cmake-library.git;protocol=https;branch=main;tag=v${PV} \
            file://run-ptest"
-SRCREV = "019a035251b16387223365bf72dc15b8c8b9a813"
+SRCREV = "02ded6a76ffc0ddecbb74e62c695e6abdee0c824"
 # No S needed: wrynose unpacks the tree into ${UNPACKDIR}/${BP}, the default.
 
 DEPENDS = "openssl"

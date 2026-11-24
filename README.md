@@ -15,7 +15,7 @@ It targets Yocto Project 6.0 (`wrynose`).
 ## Recipes
 
 - `recipes-libs/util/util_git.bb` builds the library template (`util`) at
-  a release tag, now `v0.2.0`. `util` gets the versioned `libutil.so.*`;
+  a release tag, now `v0.3.0`. `util` gets the versioned `libutil.so.*`;
   `util-dev` gets the headers under `include/util/`, the `libutil.so`
   link and the CMake package under `lib/cmake/util/`. The recipe adds no
   packaging rules of its own, so a QA failure points at the library.
@@ -105,7 +105,7 @@ With warm caches a rebuild of `util` takes under a minute in an existing work
 directory, a few minutes in a fresh one. The console log is
 `$KAS_WORK_DIR/build/tmp/log/cooker/qemuarm64/console-latest.log`. The
 per-task logs for `util`, QA output included, are under
-`$KAS_WORK_DIR/build/tmp/work/cortexa57-poky-linux/util/0.2.0/temp/`.
+`$KAS_WORK_DIR/build/tmp/work/cortexa57-poky-linux/util/0.3.0/temp/`.
 
 The build should pass packaging QA. To see the split into `util` (the
 versioned library) and `util-dev` (headers, the `libutil.so` link and the
