@@ -26,6 +26,13 @@ It targets Yocto Project 6.0 (`wrynose`).
   template at a release tag, now `v0.1.0`, against `util` and meta-oe's
   `spdlog`. It installs one binary, `/usr/bin/app`. The app's tests are not
   built.
+- `recipes-devtools/tracy/tracy_0.15.0.bb` builds Tracy's client library
+  at its `v0.15.0` tag, shared and with `TRACY_ON_DEMAND`, so nothing is
+  recorded until a capture tool connects. `tracy` gets
+  `libTracyClient.so.0.15.0`; `tracy-dev` gets the headers under
+  `include/tracy/` and the CMake package for `Tracy::TracyClient`. None of
+  Tracy's tools are built: capturing runs on the host with
+  cxx-cmake-container's `tracy-capture`, which has to be the same version.
 
 ## Running ptest on hardware
 

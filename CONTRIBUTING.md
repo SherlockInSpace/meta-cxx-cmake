@@ -37,7 +37,7 @@ How changes land in this layer and how releases are made.
 A recipe change is done when this passes packaging QA:
 
 ```sh
-kas-container build --target util --target cxx-cmake-app kas/qemuarm64.yml
+kas-container build --target util --target cxx-cmake-app --target tracy kas/qemuarm64.yml
 ```
 
 ## Releases
