@@ -9,7 +9,7 @@ Instructions for coding agents working in this repository. People should read
 |---|---|
 | Layer check | `kas-container shell kas/check-layer.yml -c 'yocto-check-layer --no-auto-dependency --dependency /work/openembedded-core/meta /work/meta-openembedded/meta-oe -- /repo'` |
 | SDK dry runs | `kas-container build kas/sdk.yml -- -n`, `kas-container build kas/sdk-aarch64.yml -- -n` |
-| Full build (needs a build machine) | `kas-container build --target util --target cxx-cmake-app --target tracy kas/qemuarm64.yml` |
+| Full build (needs a build machine) | `kas-container build --target util --target cxx-cmake-app --target tracy kas/qemuarm64.yml`, then `kas-container build kas/app-tracy.yml` |
 
 CI runs the first two. Say in the pull request whether you ran the full build.
 
