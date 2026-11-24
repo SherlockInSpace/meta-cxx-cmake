@@ -34,10 +34,12 @@ How changes land in this layer and how releases are made.
 - Nothing runs under QEMU. `qemuarm64` is a build target; ptest packages run
   on hardware.
 
-A recipe change is done when this passes packaging QA:
+A recipe change is done when these pass packaging QA, the second with the
+app's `tracy` option on:
 
 ```sh
 kas-container build --target util --target cxx-cmake-app --target tracy kas/qemuarm64.yml
+kas-container build kas/app-tracy.yml
 ```
 
 ## Releases

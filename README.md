@@ -25,7 +25,13 @@ It targets Yocto Project 6.0 (`wrynose`).
 - `recipes-apps/cxx-cmake-app/cxx-cmake-app_git.bb` builds the application
   template at a release tag, now `v0.1.0`, against `util` and meta-oe's
   `spdlog`. It installs one binary, `/usr/bin/app`. The app's tests are not
-  built.
+  built. Its `tracy` option builds it with Tracy zones; it is off by
+  default, and `kas/app-tracy.yml` or this line in `local.conf` turns it
+  on:
+
+  ```
+  PACKAGECONFIG:append:pn-cxx-cmake-app = " tracy"
+  ```
 - `recipes-devtools/tracy/tracy_0.15.0.bb` builds Tracy's client library
   at its `v0.15.0` tag, shared and with `TRACY_ON_DEMAND`, so nothing is
   recorded until a capture tool connects. `tracy` gets

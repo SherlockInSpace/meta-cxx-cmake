@@ -1,0 +1,12 @@
+# The app with Tracy zones, linked against the tracy recipe's library:
+#   kas build kas/app-tracy.yml
+header:
+  version: 23
+  includes:
+    - kas/qemuarm64.yml
+
+target: cxx-cmake-app
+
+local_conf_header:
+  app-tracy: |
+    PACKAGECONFIG:append:pn-cxx-cmake-app = " tracy"

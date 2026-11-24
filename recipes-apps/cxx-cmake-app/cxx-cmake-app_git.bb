@@ -24,3 +24,9 @@ inherit cmake
 # The unit tests need GoogleTest and the integration tests drive the binary
 # with pytest on the build host, so neither tier is built here.
 EXTRA_OECMAKE = "-DBUILD_TESTING=OFF"
+
+# Tracy zones are off by default: whether a shipped binary has them is the
+# product's decision. With tracy on, the app links libTracyClient and so
+# depends on the tracy package.
+PACKAGECONFIG ??= ""
+PACKAGECONFIG[tracy] = "-DENABLE_TRACY=ON,-DENABLE_TRACY=OFF,tracy"
