@@ -22,6 +22,10 @@ It targets Yocto Project 6.0 (`wrynose`).
   With `ptest` in `DISTRO_FEATURES`, `util-ptest` holds the unit test
   binary and `run-ptest`; it runs on hardware with `ptest-runner util`,
   never under QEMU.
+- `recipes-apps/cxx-cmake-app/cxx-cmake-app_git.bb` builds the application
+  template at a release tag, now `v0.1.0`, against `util` and meta-oe's
+  `spdlog`. It installs one binary, `/usr/bin/app`. The app's tests are not
+  built.
 
 ## Dependencies
 
@@ -100,7 +104,8 @@ From the root of this repo:
 kas-container build --target util kas/qemuarm64.yml
 ```
 
-A cold build runs 984 tasks and takes about 20 minutes on a 20-core machine.
+`--target cxx-cmake-app` builds the app, and `util` with it. A cold build
+of `util` runs 984 tasks and takes about 20 minutes on a 20-core machine.
 With warm caches a rebuild of `util` takes under a minute in an existing work
 directory, a few minutes in a fresh one. The console log is
 `$KAS_WORK_DIR/build/tmp/log/cooker/qemuarm64/console-latest.log`. The
