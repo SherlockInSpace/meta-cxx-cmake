@@ -1,0 +1,10 @@
+# kas/sdk.yml for aarch64 hosts, the container's arm64 image.
+#   kas build kas/sdk-aarch64.yml
+header:
+  version: 23
+  includes:
+    - kas/sdk.yml
+
+local_conf_header:
+  sdkmachine: |
+    SDKMACHINE = "aarch64"
