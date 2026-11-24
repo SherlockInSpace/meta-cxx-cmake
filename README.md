@@ -163,6 +163,21 @@ kas-container build kas/sdk-aarch64.yml
 Each writes a self-extracting `*-toolchain-*.sh` installer to
 `$KAS_WORK_DIR/build/tmp/deploy/sdk/`.
 
+Releases of this layer have both installers, a `SHA256SUMS` over them and
+the lock file they were built from, so you rarely need to build one. To
+install the SDK for this host (it needs python3, xz and file):
+
+```sh
+release=https://github.com/SherlockInSpace/meta-cxx-cmake/releases/download/v0.1.0
+installer=poky-glibc-$(uname -m)-core-image-minimal-cortexa57-qemuarm64-toolchain-6.0.2.sh
+curl -fLO "$release/$installer" -fLO "$release/SHA256SUMS"
+sha256sum -c --ignore-missing SHA256SUMS
+sh "$installer" -y -d /opt/poky/6.0.2
+. /opt/poky/6.0.2/environment-setup-cortexa57-poky-linux
+```
+
+cxx-cmake-container's `yocto` image is `ci` with this SDK installed.
+
 ## Maintainer
 
 Ryan Sherlock <ryan.m.sherlock@gmail.com>
