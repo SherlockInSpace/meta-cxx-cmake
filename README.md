@@ -157,11 +157,10 @@ Ryan Sherlock <ryan.m.sherlock@gmail.com>
 ## Submitting patches
 
 Patches are submitted as GitHub pull requests against the `main` branch of
-<https://github.com/SherlockInSpace/meta-cxx-cmake>. Please follow the
-[Conventional Commits](https://www.conventionalcommits.org/) format for
-every commit subject. CI lints each commit in the pull request with
-commitlint. Pull requests are rebase-merged, one to a few commits each. Bug
-reports and feature requests go to the repository's
+<https://github.com/SherlockInSpace/meta-cxx-cmake>.
+[CONTRIBUTING.md](CONTRIBUTING.md) has the conventions: Conventional
+Commits, one issue per pull request, rebase merges. Bug reports and feature
+requests go to the repository's
 [issue tracker](https://github.com/SherlockInSpace/meta-cxx-cmake/issues).
 
 ## License
