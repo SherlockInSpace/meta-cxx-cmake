@@ -1,0 +1,49 @@
+name: sdk
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  # bitbake -n resolves every task populate_sdk needs without running any, so
+  # a package nothing provides fails here rather than hours into the build.
+  dry-run:
+    name: SDK dry run (SDKMACHINE ${{ matrix.sdkmachine }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sdkmachine: x86_64
+            config: kas/sdk.yml
+          - sdkmachine: aarch64
+            config: kas/sdk-aarch64.yml
+    env:
+      KAS_CLONE_DEPTH: "1"
+      KAS_CONFIG: ${{ matrix.config }}
+      SDKMACHINE_WANTED: ${{ matrix.sdkmachine }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install kas-container 5.5
+        run: |
+          pipx install kas==5.5
+          kas-container --version
+
+      - name: Use a kas work dir outside the repository
+        run: |
+          mkdir -p "$RUNNER_TEMP/kas-work"
+          echo "KAS_WORK_DIR=$RUNNER_TEMP/kas-work" >> "$GITHUB_ENV"
+
+      - name: Dry-run populate_sdk
+        run: kas-container build "$KAS_CONFIG" -- -n
+
+      - name: Check SDKMACHINE
+        run: |
+          got=$(kas-container shell "$KAS_CONFIG" -c 'bitbake-getvar --value SDKMACHINE' | tail -n 1)
+          echo "SDKMACHINE=$got"
+          test "$got" = "$SDKMACHINE_WANTED"
