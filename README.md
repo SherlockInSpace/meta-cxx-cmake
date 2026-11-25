@@ -188,7 +188,7 @@ the lock file they were built from, so you rarely need to build one. To
 install the SDK for this host (it needs python3, xz and file):
 
 ```sh
-release=https://github.com/SherlockInSpace/meta-cxx-cmake/releases/download/v0.1.0
+release=https://github.com/SherlockInSpace/meta-cxx-cmake/releases/download/v0.2.0
 installer=poky-glibc-$(uname -m)-core-image-minimal-cortexa57-qemuarm64-toolchain-6.0.2.sh
 curl -fLO "$release/$installer" -fLO "$release/SHA256SUMS"
 sha256sum -c --ignore-missing SHA256SUMS
