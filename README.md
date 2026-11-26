@@ -131,11 +131,11 @@ kas-container build --target util kas/qemuarm64.yml
 
 `--target cxx-cmake-app` builds the app, and `util` with it. A cold build
 of `util` runs 984 tasks and takes about 20 minutes on a 20-core machine. On
-the build server (8 cores, `BB_NUMBER_THREADS=8`, `PARALLEL_MAKE=-j8`), `util`
-and the app ran 1242 tasks from empty caches in 10 minutes and left 17 GB in
-the work directory, 0.8 GB of shared state and 1.1 GB of downloads.
-With warm caches a rebuild of `util` takes under a minute in an existing work
-directory, a few minutes in a fresh one. The console log is
+the build server (4 cores, 8 threads, `BB_NUMBER_THREADS=8`,
+`PARALLEL_MAKE=-j8`), `util`, the app and `tracy` ran 1262 tasks from empty
+caches in 53 minutes. With warm caches a rebuild of `util` takes about a
+minute in an existing work directory and a minute and a half in a fresh one.
+The console log is
 `$KAS_WORK_DIR/build/tmp/log/cooker/qemuarm64/console-latest.log`. The
 per-task logs for `util`, QA output included, are under
 `$KAS_WORK_DIR/build/tmp/work/cortexa57-poky-linux/util/0.3.0/temp/`.
@@ -178,10 +178,11 @@ kas-container build kas/sdk-aarch64.yml
 ```
 
 Each writes a self-extracting `*-toolchain-*.sh` installer to
-`$KAS_WORK_DIR/build/tmp/deploy/sdk/`. On the build server, after `util` and
-the app, the x86_64 SDK took 69 minutes and the aarch64 one 19 more, since
-they share the target packages. The work directory then held 110 GB, shared
-state 8.9 GB and downloads 6.7 GB, so plan on about 130 GB of disk for both.
+`$KAS_WORK_DIR/build/tmp/deploy/sdk/`. On the build server, after the
+recipes, the x86_64 SDK took 6 hours, most of it compiling LLVM and clang, and
+the aarch64 one 1 hour 40 minutes more, since it reuses the target packages
+and those tools. The work directory then held 110 GB, shared state 8.9 GB and
+downloads 6.6 GB, so plan on about 130 GB of disk for both.
 
 Releases of this layer have both installers, a `SHA256SUMS` over them and
 the lock file they were built from, so you rarely need to build one. To
